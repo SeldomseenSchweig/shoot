@@ -18,26 +18,40 @@ var config = {
 
 let game = new Phaser.Game(config);
 let player;
+let alien;
 let enter;
 let shot;
 let xSpeed = 0;
 let ySpeed = 0;
+let alienXSpeed = 3;
+let alienYSpeed = 3;
 const ACCEL = 3;
+let alienAccel = 4;
 
 function preload ()
 {
     this.load.image('background', 'assets/background.png');
     this.load.image('crosshair', 'assets/crosshair.png');
     this.load.audio('shot', 'assets/shoot.wav');
+    this.load.spritesheet('alien', 'assets/alien.png', { frameWidth: 100, frameHeight: 100 });
 }
 
 function create ()
 {
     this.add.image(400,300,'background');
+    alien = this.physics.add.sprite(200, 150, 'alien');
+    alien.setCollideWorldBounds(true);
     player = this.physics.add.sprite(400, 300, 'crosshair');
     cursors = this.input.keyboard.createCursorKeys();
     enter = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
     shot = this.sound.add('shot');
+
+    this.anims.create({
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('alien', { start: 0, end: 9 }),
+        frameRate: 10,
+        repeat: -1
+    });
 }
 
 
@@ -61,6 +75,26 @@ function update()
     if(player.y <= 50){
         player.setVelocityY(ACCEL);
         ySpeed = ACCEL;
+    }
+
+    if(alien.x >= 750){
+        console.log("REVERSE");
+        alien.x = 749;
+        alienXSpeed = alienXSpeed * (-1);
+        alien.setVelocityX(alienXSpeed);
+    } else {
+       // console.log("Moving the alien:" + alien.x + " at speed: " + alienXSpeed);
+        alien.x = alien.x + alienXSpeed;
+    }
+
+    if(alien.x <= 50){
+        console.log("REVERSE");
+        alien.x = 51;
+        alienXSpeed = alienXSpeed * (-1);
+        alien.setVelocityX(alienXSpeed);
+    }  else {
+       // console.log("Moving the alien:" + alien.x + " at speed: " + alienXSpeed);
+        alien.x = alien.x + alienXSpeed;
     }
 
     if(cursors.left.isDown){
