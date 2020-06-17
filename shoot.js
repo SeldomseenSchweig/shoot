@@ -27,19 +27,31 @@ let alienXSpeed = 1;
 let alienYSpeed = 1;
 const ACCEL = 8;
 let alienAccel = 4;
-let accuracy = 25;
+let accuracy = 50;
+let score = 0;
+let scoreText = "";
+let timerText = "";
+let timer=0;
+let interval;
+let gameover = false;
 
 function preload ()
 {
     this.load.image('background', 'assets/background.png');
     this.load.image('crosshair', 'assets/crosshair.png');
     this.load.audio('shot', 'assets/shoot.wav');
+    this.load.audio('hitsound', 'assets/hit_sound.wav');
+    this.load.audio('backgroundmusic', 'assets/piano.mp3');
     this.load.spritesheet('alien', 'assets/alien.png', { frameWidth: 100, frameHeight: 100 });
+    this.load.spritesheet('explosion', 'assets/explode.png', {frameWidth: 100, frameHeight: 100});
 }
 
 function create ()
 {
     this.add.image(400,300,'background');
+    scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+    timerText = this.add.text(600, 16, 'timer: 0', { fontSize: '32px', fill: '#000' });
+
     alien = this.physics.add.sprite(200, 150, 'alien');
     alien.setCollideWorldBounds(true);
     player = this.physics.add.sprite(400, 300, 'crosshair');
@@ -48,42 +60,63 @@ function create ()
     cursors = this.input.keyboard.createCursorKeys();
     enter = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
     shot = this.sound.add('shot');
+    backgroundmusic = this.sound.add('backgroundmusic');
+    hitsound = this.sound.add('hitsound');
 
     this.anims.create({
-        key: 'left',
+        key: 'cycle',
         frames: this.anims.generateFrameNumbers('alien', { start: 0, end: 9 }),
         frameRate: 10,
         repeat: -1
     });
+
+    this.anims.create({
+        key: 'explode',
+        frames: this.anims.generateFrameNumbers('explosion', {start: 0, end: 4}),
+        frameRate: 10,
+        repeat: 0
+    });
+
+    alien.anims.play('cycle', true);
+    backgroundmusic.play();
+    interval = setInterval(function(){
+        timer += 1;
+        timerText.setText('timer: ' + timer);
+        if(timer >= 61){
+           gameover = true;
+           endGame();
+        }
+    }, 1000);
+    
 }
+
 
 
 function update()
 {
+    if(gameover){
+        return;
+    }
+    
     //Alien Movement
     if(alien.x >= 750){
-        console.log("REVERSE");
         alien.x = 749;
         alienXSpeed = alienXSpeed * (-1);
         alien.setVelocityX(alienXSpeed);
     }  else {
-       // console.log("Moving the alien:" + alien.x + " at speed: " + alienXSpeed);
         alien.x = alien.x + alienXSpeed;
     }
 
 
     if(alien.x <= 50){
-        console.log("REVERSE");
         alien.x = 51;
         alienXSpeed = alienXSpeed * (-1);
         alien.setVelocityX(alienXSpeed);
     }  else {
-       // console.log("Moving the alien:" + alien.x + " at speed: " + alienXSpeed);
         alien.x = alien.x + alienXSpeed;
     }
 
     if(alien.y >= 550){
-        console.log("REVERSE-VERTICAL");
         alien.y = 549;
         alienYSpeed = alienYSpeed * (-1);
         alien.setVelocityY(alienYSpeed);
@@ -92,7 +125,6 @@ function update()
     }
 
     if(alien.y <= 50){
-        console.log("REVERSE-VERTICAL");
         alien.y = 51;
         alienYSpeed = alienYSpeed * (-1);
         alien.setVelocityY(alienYSpeed);
@@ -105,35 +137,65 @@ function update()
     if(cursors.left.isDown){
         xSpeed = xSpeed - ACCEL;
         player.setVelocityX(xSpeed);
-        console.log(xSpeed);
     }
     if(cursors.right.isDown){
         xSpeed = xSpeed + ACCEL;
         player.setVelocityX(xSpeed);
-        console.log(xSpeed);
     }
     if(cursors.up.isDown){
         ySpeed = ySpeed - ACCEL;
         player.setVelocityY(ySpeed);
-        console.log(ySpeed);
     }
     if(cursors.down.isDown){
         ySpeed = ySpeed + ACCEL;
         player.setVelocityY(ySpeed);
-        console.log(ySpeed);
     }
-    if(enter.isDown){
+ 
+
+    if(Phaser.Input.Keyboard.JustDown(enter)) {
        //Fire
         shot.play();
         if(Math.abs(player.x - alien.x) < accuracy && Math.abs(player.y - alien.y) < accuracy){
-            //Hit
-            console.log("Hit");
+            hit();
         } else {
-            //Miss
-            console.log("Miss");
+            miss();
         }
     }
 
-   
+}
 
+
+function hit(){
+    hitsound.play();
+    score = score + 10;
+    scoreText.setText('Score: ' + score);
+    //recycle Alien
+    alien.on('animationcomplete', function(){
+        alien.anims.play('cycle', true);
+        resetPlayer();
+    });
+
+    alien.anims.play('explode', true);
+}
+
+function miss(){
+    score = score -1;
+    scoreText.setText('Score: ' + score);
+}
+
+function resetPlayer(){
+    player.x = 400;
+    player.y = 300;
+    player.setVelocityX(0);
+    player.setVelocityY(0);
+    xSpeed = 0;
+    ySpeed = 0;
+}
+
+
+function endGame(){
+    alien.destroy();
+    player.destroy();
+    timerText.setText('');
+    clearInterval(interval);
 }
