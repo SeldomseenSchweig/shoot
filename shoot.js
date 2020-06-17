@@ -23,10 +23,11 @@ let enter;
 let shot;
 let xSpeed = 0;
 let ySpeed = 0;
-let alienXSpeed = 3;
-let alienYSpeed = 3;
-const ACCEL = 3;
+let alienXSpeed = 1;
+let alienYSpeed = 1;
+const ACCEL = 8;
 let alienAccel = 4;
+let accuracy = 25;
 
 function preload ()
 {
@@ -42,6 +43,8 @@ function create ()
     alien = this.physics.add.sprite(200, 150, 'alien');
     alien.setCollideWorldBounds(true);
     player = this.physics.add.sprite(400, 300, 'crosshair');
+    player.setCollideWorldBounds(true);
+
     cursors = this.input.keyboard.createCursorKeys();
     enter = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
     shot = this.sound.add('shot');
@@ -57,35 +60,17 @@ function create ()
 
 function update()
 {
-    if(player.x >= 750){
-        player.setVelocityX(-1* ACCEL);
-        xSpeed = (-1 * ACCEL);
-    }
-
-    if(player.x <= 50){
-        player.setVelocityX(ACCEL);
-        xSpeed = ACCEL;
-    }
-
-    if(player.y >= 550){
-        player.setVelocityY(-1 * ACCEL);
-        ySpeed = (-1 * ACCEL);
-    }
-
-    if(player.y <= 50){
-        player.setVelocityY(ACCEL);
-        ySpeed = ACCEL;
-    }
-
+    //Alien Movement
     if(alien.x >= 750){
         console.log("REVERSE");
         alien.x = 749;
         alienXSpeed = alienXSpeed * (-1);
         alien.setVelocityX(alienXSpeed);
-    } else {
+    }  else {
        // console.log("Moving the alien:" + alien.x + " at speed: " + alienXSpeed);
         alien.x = alien.x + alienXSpeed;
     }
+
 
     if(alien.x <= 50){
         console.log("REVERSE");
@@ -97,6 +82,26 @@ function update()
         alien.x = alien.x + alienXSpeed;
     }
 
+    if(alien.y >= 550){
+        console.log("REVERSE-VERTICAL");
+        alien.y = 549;
+        alienYSpeed = alienYSpeed * (-1);
+        alien.setVelocityY(alienYSpeed);
+    } else {
+        alien.y = alien.y + alienYSpeed;
+    }
+
+    if(alien.y <= 50){
+        console.log("REVERSE-VERTICAL");
+        alien.y = 51;
+        alienYSpeed = alienYSpeed * (-1);
+        alien.setVelocityY(alienYSpeed);
+    } else {
+        alien.y = alien.y + alienYSpeed;
+    }
+
+
+    //Player cursor movement
     if(cursors.left.isDown){
         xSpeed = xSpeed - ACCEL;
         player.setVelocityX(xSpeed);
@@ -120,6 +125,13 @@ function update()
     if(enter.isDown){
        //Fire
         shot.play();
+        if(Math.abs(player.x - alien.x) < accuracy && Math.abs(player.y - alien.y) < accuracy){
+            //Hit
+            console.log("Hit");
+        } else {
+            //Miss
+            console.log("Miss");
+        }
     }
 
    
